@@ -1,0 +1,141 @@
+/* ===== Layout ===== */
+.auth-container {
+  max-width: 420px;
+  margin: 60px auto;
+  padding: 0 20px;
+  text-align: center;
+  animation: fadeIn 0.4s ease;
+}
+
+#app-logo {
+  height: 55px;
+  margin-bottom: 20px;
+  opacity: 0.9;
+}
+
+/* ===== Card ===== */
+.auth-card {
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(12px);
+  padding: 28px 26px;
+  border-radius: 14px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.auth-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 38px rgba(0, 0, 0, 0.12);
+}
+
+.auth-card h2 {
+  margin-bottom: 18px;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #222;
+}
+
+/* ===== Form ===== */
+label {
+  display: block;
+  text-align: left;
+  font-size: 0.9rem;
+  margin-bottom: 14px;
+  font-weight: 500;
+}
+
+input {
+  width: 100%;
+  margin-top: 6px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid #d7d7d7;
+  font-size: 0.95rem;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+  background: #fff;
+}
+
+input:focus {
+  outline: none;
+  border-color: #4d7cff;
+  box-shadow: 0 0 0 3px rgba(77, 124, 255, 0.28);
+}
+
+/* ===== Button ===== */
+button {
+  width: 100%;
+  padding: 12px;
+  font-size: 1rem;
+  background: linear-gradient(135deg, #4d7cff, #6e90ff);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.22s ease;
+  margin-top: 6px;
+}
+
+button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #5a86ff, #7b9bff);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(77, 124, 255, 0.35);
+}
+
+button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* ===== Small Text ===== */
+.small {
+  font-size: 0.83rem;
+  color: #666;
+  margin-top: 6px;
+}
+
+.message {
+  margin-top: 12px;
+  font-size: 0.9rem;
+}
+
+/* ===== Password Strength Meter ===== */
+.pw-meter {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pw-meter .meter {
+  height: 8px;
+  border-radius: 6px;
+  transition: width .25s ease, background .25s ease;
+}
+
+.meter-0 { background: #e6e6e6; }
+.meter-1 { background: #ff6b6b; }
+.meter-2 { background: #ffa654; }
+.meter-3 { background: #ffd86b; }
+.meter-4 { background: #3ecf8e; }
+
+/* ===== Bottom Links ===== */
+.auth-card p.small {
+  margin-top: 18px;
+}
+
+a {
+  text-decoration: none;
+  color: #4d7cff;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: #355ce8;
+}
+
+/* ===== Animations ===== */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

@@ -1,0 +1,125 @@
+* --- Marble Jar / Glass Bowl --- */
+
+.jar-card {
+  border: 1px solid #f0f0f0;
+  border-radius: 18px;
+  padding: 14px 16px 16px;
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+}
+
+.jar-title {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.jar-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+/* Bowl itself */
+.jar-bowl {
+  position: relative;
+  width: 260px;
+  height: 190px;
+  border-radius: 140px 140px 90px 90px;
+  background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.9), rgba(220,235,255,0.2)),
+              radial-gradient(circle at 70% 80%, rgba(255,255,255,0.6), rgba(200,220,255,0.1));
+  border: 2px solid rgba(255,255,255,0.8);
+  box-shadow:
+    0 0 0 1px rgba(150, 170, 200, 0.35),
+    0 18px 30px rgba(0,0,0,0.10);
+  backdrop-filter: blur(6px);
+  overflow: hidden;
+}
+
+/* Little rim shine */
+.jar-bowl::before {
+  content: "";
+  position: absolute;
+  top: 8px;
+  left: 18px;
+  right: 18px;
+  height: 14px;
+  border-radius: 999px;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.8), transparent);
+  opacity: 0.8;
+}
+
+/* Single marble */
+.jar-marble {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.25);
+  animation: marble-drop 0.5s ease-out forwards;
+  transform: translateY(-40px); /* start above bowl */
+  opacity: 0;
+}
+
+/* Different marble types */
+.marble-normal {
+  background: radial-gradient(circle at 30% 20%, #ffffff, #8ec5fc);
+}
+
+.marble-gold {
+  background: radial-gradient(circle at 30% 20%, #fffbe9, #f5b300);
+}
+
+.marble-special {
+  background: radial-gradient(circle at 30% 20%, #ffe9ff, #c864ff);
+}
+
+/* Drop animation */
+@keyframes marble-drop {
+  from {
+    transform: translateY(-40px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.jar-counts {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+.jar-count-number {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.jar-total {
+  text-align: center;
+  margin-top: 4px;
+  color: #555;
+}
+.jar-card {
+  background: #ffeaf5;               /* soft pastel pink */
+  border-radius: 20px;
+  padding: 18px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+}
+.bowl-card {
+  width: 360px;
+  height: 300px;
+  background: #ffeaf5;
+  border-radius: 22px;
+  padding: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+
