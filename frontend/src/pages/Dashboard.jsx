@@ -1,152 +1,163 @@
-// src/pages/Dashboard.jsx
-import React, { useEffect, useState } from 'react';
-import TaskForm from '../components/TaskForm.jsx';
-import TaskList from '../components/TaskList.jsx';
-import PhysicsGlassBowl3D from "../components/PhysicsGlassBowl3D.jsx";
+import { useState } from "react";
+import { useAuth } from "../auth/AuthProvider";
+import TaskCard from "../components/TaskPanel";
+import MarblePanel from "../components/MarblePanel";
 
-import { useAuth } from '../auth/AuthProvider.jsx';
-import { useToast } from '../components/Toast.jsx';
-import * as api from '../api.js';
-
-const logo = '/mnt/data/0e9c1eb7-05b1-4d2e-908a-3088e066d1fb.png';
 
 export default function Dashboard() {
-  const { doLogout } = useAuth();
-  const toast = useToast();
+  const { logout } = useAuth();
 
-  const [tasks, setTasks] = useState([]);
-  const [loadingTasks, setLoadingTasks] = useState(true);
-  const [marbles, setMarbles] = useState([]); // FRONTEND MARBLES ONLY
+  // ✅ CENTER DATE INDEX (DRIVES THE LOOP)
+  const [centerDate, setCenterDate] = useState(new Date());
 
-  async function loadAll() {
-    setLoadingTasks(true);
-    try {
-      const t = await api.getTasks();   // only load tasks
-      setTasks(t || []);
-    } catch (err) {
-      console.error('Failed to load dashboard data', err);
-      toast.push('Failed to load data', { type: 'error' });
-    } finally {
-      setLoadingTasks(false);
-    }
-  }
+  // ✅ CARD POSITIONS (TOP → CENTER → BOTTOM)
+  const [slots, setSlots] = useState([
+    new Date(new Date().setDate(new Date().getDate() - 1)),
+    new Date(),
+    new Date(new Date().setDate(new Date().getDate() + 1)),
+  ]);
 
-  useEffect(() => { loadAll(); }, []);
+  // ✅ MOVE DOWN (INFINITE LOOP)
+  const rollDown = () => {
+    setSlots(([top, center, bottom]) => {
+      const newBottom = new Date(bottom);
+      newBottom.setDate(newBottom.getDate() + 1);
 
-  async function handleCreateTask(payload) {
-    try {
-      const newTask = await api.createTask(payload);
-      setTasks(s => [newTask, ...s]);
-      toast.push('Task created', { type: 'success' });
-    } catch {
-      toast.push('Failed to create task', { type: 'error' });
-    }
-  }
+      const newCenter = bottom;
+      setCenterDate(newCenter);
 
-  // ✨ FRONTEND-ONLY MARBLE DELETE
-  async function handleDeleteTask(id) {
-    try {
-      const deletedTask = tasks.find(t => t.id === id);
+      return [center, bottom, newBottom];
+    });
+  };
 
-      await api.deleteTask(id);
+  // ✅ MOVE UP (INFINITE LOOP)
+  const rollUp = () => {
+    setSlots(([top, center, bottom]) => {
+      const newTop = new Date(top);
+      newTop.setDate(newTop.getDate() - 1);
 
-      // Remove from UI
-      setTasks(prev => prev.filter(t => t.id !== id));
+      const newCenter = top;
+      setCenterDate(newCenter);
 
-      // Determine marble type to remove
-      const marbleType =
-        deletedTask.priority === "high" ? "GOLD" :
-        deletedTask.priority === "medium" ? "SPECIAL" :
-        "NORMAL";
+      return [newTop, top, center];
+    });
+  };
 
-      // Remove one marble with matching type
-      setMarbles(prev => {
-        const copy = [...prev];
-        const index = copy.findIndex(m => m.type === marbleType);
-        if (index !== -1) copy.splice(index, 1);
-        return copy;
-      });
-
-      toast.push('Task deleted — marble removed', { type: 'success' });
-    } catch {
-      toast.push('Failed to delete task', { type: 'error' });
-    }
-  }
-
-  // ✨ FRONTEND-ONLY MARBLE ADD
-  async function handleCompleteTask(id) {
-    try {
-      const updated = await api.completeTask(id);
-
-      // Update task state
-      setTasks(prev =>
-        prev.map(t => (t.id === id ? updated : t))
-      );
-
-      // Determine marble type
-      const marbleType =
-        updated.priority === "high" ? "GOLD" :
-        updated.priority === "medium" ? "SPECIAL" :
-        "NORMAL";
-
-      // Add a marble
-      setMarbles(prev => [
-        ...prev,
-        {
-          id: crypto.randomUUID(),
-          type: marbleType,
-          style: "default",
-          awardedAt: Date.now()
-        }
-      ]);
-
-      toast.push("Task completed — marble awarded!", { type: "success" });
-    } catch {
-      toast.push('Failed to complete task', { type: 'error' });
-    }
-  }
+  // ✅ CALENDAR BAR (DRIVEN BY CENTER DATE)
+  const monthName = centerDate.toLocaleString("default", { month: "long" });
+  const year = centerDate.getFullYear();
+  const daysInMonth = new Date(year, centerDate.getMonth() + 1, 0).getDate();
 
   return (
-    <main style={{ maxWidth: 1100, margin: '32px auto', padding: 16 }}>
-      <header style={{
-        display:'flex',
-        alignItems:'center',
-        justifyContent:'space-between'
-      }}>
-        <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-          <img src={logo} alt="Mabel" style={{ height:56 }} />
-          <h2>Mabel — Dashboard</h2>
-        </div>
-        <div>
-          <button onClick={doLogout}>Logout</button>
-        </div>
-      </header>
+    <div className="min-h-screen bg-[#f6efe8] p-6">
 
-      <section style={{
-        display:'grid',
-        gridTemplateColumns:'1fr 360px',
-        gap:20,
-        marginTop:18
-      }}>
-        <div>
-          <TaskForm onCreate={handleCreateTask} />
-          <hr style={{ margin:'16px 0' }} />
+      {/* ✅ NAV BAR */}
+      <div className="mb-6 flex justify-between items-center border rounded-xl p-3 bg-white">
+        <h1 className="font-bold text-xl">MarbleJar</h1>
+        <button
+          onClick={logout}
+          className="px-4 py-1 bg-black text-white rounded cursor-pointer"
+        >
+          Logout
+        </button>
+      </div>
 
-          {loadingTasks
-            ? <div>Loading tasks…</div>
-            : <TaskList
-                tasks={tasks}
-                onDelete={handleDeleteTask}
-                onComplete={handleCompleteTask}
-              />
-          }
+      {/* ✅ REAL CALENDAR BAR */}
+      <div className="mb-6 border rounded-xl p-4 bg-white">
+        <div className="text-center font-semibold mb-3">
+          {monthName} {year}
         </div>
 
-        <aside>
-          <PhysicsGlassBowl3D marbles={marbles} />
-        </aside>
+        <div className="flex gap-2 overflow-x-auto justify-center">
+          {[...Array(daysInMonth)].map((_, i) => {
+            const day = i + 1;
+            return (
+              <div
+                key={day}
+                className={`min-w-[38px] h-[38px] flex items-center justify-center rounded-full
+                ${
+                  centerDate.getDate() === day
+                    ? "bg-black text-white"
+                    : "bg-gray-200"
+                }`}
+              >
+                {day}
+              </div>
+            );
+          })}
+        </div>
+      </div>
 
-      </section>
-    </main>
+      {/* ✅ MAIN LAYOUT */}
+      <div className="grid grid-cols-3 gap-6">
+
+        {/* ✅ INFINITE 3-SLOT LOOP */}
+        <div className="col-span-2 relative h-[640px] flex flex-col items-center justify-center gap-6 overflow-hidden">
+
+          {/* ⬆ UP */}
+          <button
+            onClick={rollUp}
+            className="absolute top-2 text-2xl cursor-pointer z-20"
+          >
+            ⬆
+          </button>
+
+          {/* ✅ TOP SLOT */}
+          <div
+            onClick={rollUp}
+            className="w-[92%] h-[160px] border rounded-xl p-4 bg-[#f9f3ed]
+                       opacity-60 cursor-pointer transition-all duration-500"
+          >
+            <h2 className="font-semibold mb-1">
+              {slots[0].toDateString()}
+            </h2>
+            <p className="text-sm">Previous day</p>
+          </div>
+
+          {/* ✅ CENTER SLOT (ACTIVE — TASK ENGINE LIVES HERE) */}
+          <div
+            className="w-[96%] h-[280px] border rounded-xl p-5 bg-white shadow-2xl
+                       transition-all duration-500 flex flex-col"
+          >
+            <h2 className="font-semibold mb-2">
+              {slots[1].toDateString()}
+            </h2>
+
+            {/* ✅ BACKEND CONNECTED TASK SYSTEM */}
+            <TaskCard date={slots[1]} />
+          </div>
+
+          {/* ✅ BOTTOM SLOT */}
+          <div
+            onClick={rollDown}
+            className="w-[92%] h-[160px] border rounded-xl p-4 bg-[#f9f3ed]
+                       opacity-60 cursor-pointer transition-all duration-500"
+          >
+            <h2 className="font-semibold mb-1">
+              {slots[2].toDateString()}
+            </h2>
+            <p className="text-sm">Next day</p>
+          </div>
+
+          {/* ⬇ DOWN */}
+          <button
+            onClick={rollDown}
+            className="absolute bottom-2 text-2xl cursor-pointer z-20"
+          >
+            ⬇
+          </button>
+
+        </div>
+
+        {/* ✅ MARBLE BOWL */}
+        {/* ✅ MARBLE BOWL */}
+<div className="border rounded-xl p-2 h-[450px] bg-white overflow-hidden">
+  <MarblePanel date={slots[1]} />
+</div>
+
+
+
+      </div>
+    </div>
   );
 }

@@ -9,7 +9,5 @@ import java.util.List;
 
 public interface MarbleRepository extends JpaRepository<Marble, Long> {
     List<Marble> findByUser(User user);
-
-    // Use User here (not userId) to match service impl that loads the User first
     long countByUserAndType(User user, MarbleType type);
 }

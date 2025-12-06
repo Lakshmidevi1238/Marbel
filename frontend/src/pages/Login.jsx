@@ -1,84 +1,57 @@
-import React, { useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "../auth/AuthProvider.jsx";
-import "./Login.css";
-
-const logo = "/mnt/data/0e9c1eb7-05b1-4d2e-908a-3088e066d1fb.png";
+import { Link , useNavigate} from "react-router-dom";
+import { useState } from "react";
+import { useAuth } from "../auth/AuthProvider";
+import { useToast} from "../components/Toast"
 
 export default function Login() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { doLogin } = useAuth();
-
-  const successMsg = location.state?.info || "";
-  const [message, setMessage] = useState(successMsg);
+    const { login } = useAuth();
+    const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [busy, setBusy] = useState(false);
+  const { showToast } = useToast();
 
-  async function onSubmit(e) {
-    e.preventDefault();
-    setMessage("");
-    setBusy(true);
-    try {
-      await doLogin(email.trim(), password);
-      navigate("/dashboard");
-    } catch (err) {
-      setMessage(err?.message || "Login failed");
-    } finally {
-      setBusy(false);
+  const handleLogin = async () => {
+    try{
+        await login({ email, password});
+        showToast("Login successful", "success");
+        navigate("/dashboard");
+    }catch (err) {
+        showToast("Invalid credentials", "error");
     }
-  }
+  };
 
   return (
-    <main className="login-container">
-      <header className="login-header">
-        <img src={logo} alt="Mabel logo" className="login-logo" />
-        <h1>Login</h1>
-      </header>
+    <div className="h-screen flex items-center justify-center">
+      <div className="w-80 p-6 border rounded-xl">
+        <h2 className="text-2xl mb-4 text-center">Login</h2>
 
-      <form onSubmit={onSubmit} className="login-form">
-        <label>
-          Email
-          <input
-            type="email"
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </label>
+        <input
+          type="email"
+          placeholder="Email"
+          className="w-full p-2 mb-3 border rounded"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
 
-        <label>
-          Password
-          <input
-            type="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </label>
+        <input
+          type="password"
+          placeholder="Password"
+          className="w-full p-2 mb-4 border rounded"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
 
-        <button type="submit" disabled={busy}>
-          {busy ? "Logging in..." : "Login"}
+        <button 
+        onClick={handleLogin}
+        className="w-full p-2 bg-black text-white rounded cursor-pointer">
+          Login
         </button>
-      </form>
 
-      <div className="login-register">
-        Don't have an account? <Link to="/register">Register</Link>
+        <p className="mt-4 text-center text-sm">
+          No account? <Link to="/register">Register</Link>
+        </p>
       </div>
-
-      {message && (
-        <div
-          className={`login-message ${
-            message.includes("successful") ? "success" : "error"
-          }`}
-        >
-          {message}
-        </div>
-      )}
-    </main>
+    </div>
   );
 }

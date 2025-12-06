@@ -1,17 +1,18 @@
-// src/main.jsx
-import React from 'react';
-import { createRoot } from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
-import App from './App';
-import './index.css'; // your styles
-import { ToastProvider } from './components/Toast.jsx';
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
+import App from "./App";
+import "./index.css";
+import { AuthProvider } from "./auth/AuthProvider";
+import { ToastProvider } from "./components/Toast";
 
-createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-   <BrowserRouter>
-  <ToastProvider>
-    <App />
-  </ToastProvider>
-</BrowserRouter>
-  </React.StrictMode>
+
+ReactDOM.createRoot(document.getElementById("root")).render(
+  <BrowserRouter>
+    <AuthProvider>
+      <ToastProvider>
+        <App />
+      </ToastProvider>
+    </AuthProvider>
+  </BrowserRouter>
 );

@@ -1,11 +1,11 @@
 package com.marblejar.service;
+
 import com.marblejar.exception.NotFoundException;
 import com.marblejar.entity.Marble;
 import com.marblejar.entity.MarbleType;
 import com.marblejar.entity.User;
 import com.marblejar.repository.MarbleRepository;
 import com.marblejar.repository.UserRepository;
-import com.marblejar.service.MarbleService;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -24,14 +24,18 @@ public class MarbleServiceImpl implements MarbleService {
 
     @Override
     public Marble awardMarble(Long userId, MarbleType type, String style) {
-    	User u = userRepository.findById(userId).orElseThrow(() -> new NotFoundException("User not found"));
+        User u = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
         Marble m = new Marble();
         m.setUser(u);
         m.setType(type);
         m.setStyle(style);
         m.setAwardedAt(Instant.now());
+
         return marbleRepository.save(m);
     }
+
     @Override
     public void awardMarbleForUsername(String email, MarbleType type, String style) {
         var user = userRepository.findByEmail(email)
@@ -42,13 +46,23 @@ public class MarbleServiceImpl implements MarbleService {
 
     @Override
     public List<Marble> listByUser(Long userId) {
-    	User u = userRepository.findById(userId).orElseThrow(() -> new NotFoundException("User not found"));
+        User u = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
         return marbleRepository.findByUser(u);
     }
 
     @Override
     public long countByUserAndType(Long userId, MarbleType type) {
-    	User u = userRepository.findById(userId).orElseThrow(() -> new NotFoundException("User not found"));
+        User u = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
         return marbleRepository.countByUserAndType(u, type);
+    }
+
+    // ✅ THIS IS WHAT FIXES YOUR BUG
+    @Override
+    public void deleteById(Long marbleId) {
+        marbleRepository.deleteById(marbleId);
     }
 }

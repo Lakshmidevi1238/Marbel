@@ -15,8 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,8 +36,6 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public List<TaskDto> findByUserEmail(String email) {
-        if (email == null) throw new NotFoundException("User not found");
-
         String norm = email.trim().toLowerCase();
         User user = userRepository.findByEmail(norm)
                 .orElseThrow(() -> new NotFoundException("User not found"));
@@ -50,8 +48,6 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public TaskDto create(String email, TaskDto dto) {
-        if (email == null) throw new RuntimeException("User not found");
-
         String norm = email.trim().toLowerCase();
         User user = userRepository.findByEmail(norm)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -70,17 +66,24 @@ public class TaskServiceImpl implements TaskService {
             }
         }
 
+        if (dto.getDueDate() != null && !dto.getDueDate().isBlank()) {
+            t.setDueDate(LocalDate.parse(dto.getDueDate()));
+        } else {
+            t.setDueDate(LocalDate.now());
+        }
+
         return toDto(taskRepository.save(t));
     }
 
     @Override
     @Transactional
     public TaskDto complete(Long id, String email) {
+
         Task t = taskRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Task not found"));
 
-        String owner = t.getUser() != null ? t.getUser().getEmail() : null;
-        if (owner == null || !owner.trim().equalsIgnoreCase(email.trim())) {
+        String owner = t.getUser().getEmail();
+        if (!owner.equalsIgnoreCase(email)) {
             throw new UnauthorizedException("Not allowed");
         }
 
@@ -88,16 +91,15 @@ public class TaskServiceImpl implements TaskService {
 
         t.setCompleted(true);
         t.setCompletedAt(Instant.now());
-        Task saved = taskRepository.save(t);
 
-        // ⭐ AWARD THE MARBLE AND CAPTURE IT ⭐
-        MarbleType type = MarbleMapper.fromPriority(saved.getPriority());
-        Marble m = marbleService.awardMarble(saved.getUser().getId(), type, "default");
+        MarbleType type = MarbleMapper.fromPriority(t.getPriority());
+        Marble marble = marbleService.awardMarble(t.getUser().getId(), type, "default");
 
-        // ⭐ RETURN DTO WITH MARBLE ID ⭐
-        TaskDto dto = toDto(saved);
-        dto.setAwardedMarbleId(m.getId());
-        return dto;
+        // ✅ STORE THE LINK
+        t.setAwardedMarbleId(marble.getId());
+
+        taskRepository.save(t);
+        return toDto(t);
     }
 
     private TaskDto toDto(Task t) {
@@ -106,19 +108,14 @@ public class TaskServiceImpl implements TaskService {
         dto.setTitle(t.getTitle());
         dto.setDescription(t.getDescription());
         dto.setCompleted(t.isCompleted());
+        dto.setAwardedMarbleId(t.getAwardedMarbleId());
 
         if (t.getPriority() != null) {
             dto.setPriority(t.getPriority().name().toLowerCase());
         }
 
-        // ⭐ If completed, try to attach the marble ID ⭐
-        if (t.isCompleted()) {
-            List<Marble> marbles = marbleService.listByUser(t.getUser().getId());
-
-            marbles.stream()
-                    .filter(m -> m.getAwardedAt().equals(t.getCompletedAt()))
-                    .findFirst()
-                    .ifPresent(m -> dto.setAwardedMarbleId(m.getId()));
+        if (t.getDueDate() != null) {
+            dto.setDueDate(t.getDueDate().toString());
         }
 
         return dto;
@@ -127,14 +124,21 @@ public class TaskServiceImpl implements TaskService {
     @Override
     @Transactional
     public void deleteIfOwnedBy(Long taskId, String email) {
+
         Task t = taskRepository.findById(taskId)
                 .orElseThrow(() -> new NotFoundException("Task not found"));
 
-        String owner = t.getUser() != null ? t.getUser().getEmail() : null;
-        if (owner == null || !owner.trim().equalsIgnoreCase(email.trim())) {
+        String owner = t.getUser().getEmail();
+        if (!owner.equalsIgnoreCase(email)) {
             throw new UnauthorizedException("Not allowed");
+        }
+
+        // ✅ DELETE LINKED MARBLE FIRST
+        if (t.getAwardedMarbleId() != null) {
+            marbleService.deleteById(t.getAwardedMarbleId());
         }
 
         taskRepository.deleteById(taskId);
     }
+
 }

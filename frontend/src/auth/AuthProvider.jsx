@@ -1,94 +1,44 @@
-// src/auth/AuthProvider.jsx
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import * as api from '../api.js';
-import { setNavigate } from './axiosInstance.js';
+import { createContext, useContext, useEffect, useState } from "react";
+import * as api from "../api";
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // give navigate() to axios for 401 auto-redirects
   useEffect(() => {
-    setNavigate(navigate);
-  }, [navigate]);
-
-  // INIT — check refresh token, try silent login
-  useEffect(() => {
-    (async () => {
-      try {
-        const refresh = api.getSavedRefreshToken?.();
-        if (refresh) {
-          const session = await api.refresh();
-          setUser(session?.user || {});
-        }
-      } catch (err) {
-        await api.logout?.();
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    })();
+    const token = localStorage.getItem("marbel_access");
+    if (token) {
+      setUser({ loggedIn: true });
+    } else {
+      setUser(null);
+    }
+    setLoading(false);
   }, []);
 
-  // LOGIN
-  // LOGIN
-async function doLogin(email, password) {
-  try {
-    const res = await api.login({ email, password });
+  const login = async (data) => {
+    const res = await api.login(data);
 
-    // res = { user, access, refresh, raw }
-    setUser(res.user || { email });
+    // ✅ FORCE REFRESH USER AFTER TOKEN IS SAVED
+    setUser({ loggedIn: true });
 
     return res;
-  } catch (err) {
-    const msg =
-      err?.response?.data?.message ||
-      err?.response?.data?.error ||
-      err?.message ||
-      "Login failed";
-    throw new Error(msg);
-  }
-}
+  };
 
-  // REGISTER (clean error handling)
-  async function doRegister(name, email, password) {
-    try {
-      const res = await api.register({ name, email, password });
-      return res;
-    } catch (err) {
-      const msg =
-        err?.response?.data?.message ||
-        err?.response?.data?.error ||
-        err?.message ||
-        "Registration failed";
-      throw new Error(msg);
-    }
-  }
+  const register = async (data) => {
+    return await api.register(data);
+  };
 
-  // LOGOUT
-  async function doLogout() {
-    try {
-      await api.logout();
-    } finally {
-      setUser(null);
-      navigate('/login');
-    }
-  }
+  const logout = async () => {
+    await api.logout();
+    setUser(null);
+  };
+
+  if (loading) return null;
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        loading,
-        doLogin,
-        doRegister,
-        doLogout
-      }}
-    >
+    <AuthContext.Provider value={{ user, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

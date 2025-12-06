@@ -6,6 +6,7 @@ public class TaskDto {
     private String description;
     private Boolean completed;
     private String priority;
+    private String dueDate;
 
     // ⭐ ADD THIS ⭐
     private Long awardedMarbleId;
@@ -28,4 +29,11 @@ public class TaskDto {
     // ⭐ NEW FIELD ⭐
     public Long getAwardedMarbleId() { return awardedMarbleId; }
     public void setAwardedMarbleId(Long awardedMarbleId) { this.awardedMarbleId = awardedMarbleId; }
+    
+    public String getDueDate() {
+    	return dueDate;
+    }
+    public void setDueDate(String dueDate) {
+    	this.dueDate = dueDate;
+    }
 }
