@@ -51,15 +51,25 @@ public class TaskController {
         if (authentication == null || authentication.getName() == null) {
             throw new UnauthorizedException("Not authenticated");
         }
+
         String username = authentication.getName();
 
         TaskDto dto = new TaskDto();
         dto.setTitle(createDto.getTitle());
         dto.setDescription(createDto.getDescription());
-        dto.setPriority(createDto.getPriority() == null ? null : createDto.getPriority().trim().toLowerCase());
+
+        dto.setPriority(
+            createDto.getPriority() == null
+                ? null
+                : createDto.getPriority().trim().toLowerCase()
+        );
+
+        // ✅✅✅ THIS IS THE MISSING LINE THAT CAUSED ALL THE CHAOS
+        dto.setDueDate(createDto.getDueDate());
 
         return taskService.create(username, dto);
     }
+
 
     /**
      * Mark a task complete and return the updated TaskDto.

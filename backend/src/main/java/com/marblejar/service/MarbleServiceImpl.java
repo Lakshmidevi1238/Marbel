@@ -9,6 +9,8 @@ import com.marblejar.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 
 @Service
@@ -22,6 +24,7 @@ public class MarbleServiceImpl implements MarbleService {
         this.userRepository = userRepository;
     }
 
+    // ✅ OLD FLOW — STILL WORKS (LOGIN, TESTING, ETC)
     @Override
     public Marble awardMarble(Long userId, MarbleType type, String style) {
         User u = userRepository.findById(userId)
@@ -31,7 +34,26 @@ public class MarbleServiceImpl implements MarbleService {
         m.setUser(u);
         m.setType(type);
         m.setStyle(style);
-        m.setAwardedAt(Instant.now());
+        m.setAwardedAt(Instant.now()); // ✅ TODAY (OLD BEHAVIOR)
+
+        return marbleRepository.save(m);
+    }
+
+    // ✅ ✅ ✅ NEW FLOW — THIS FIXES YOUR DATE BUG
+    @Override
+    public Marble awardMarble(Long userId, MarbleType type, String style, LocalDate awardDate) {
+        User u = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        Marble m = new Marble();
+        m.setUser(u);
+        m.setType(type);
+        m.setStyle(style);
+
+        // ✅ FORCE MARBLE TO DROP ON TASK DATE
+        m.setAwardedAt(
+                awardDate.atStartOfDay(ZoneId.systemDefault()).toInstant()
+        );
 
         return marbleRepository.save(m);
     }
@@ -60,7 +82,7 @@ public class MarbleServiceImpl implements MarbleService {
         return marbleRepository.countByUserAndType(u, type);
     }
 
-    // ✅ THIS IS WHAT FIXES YOUR BUG
+    // ✅ DELETE MARBLE WHEN TASK IS DELETED
     @Override
     public void deleteById(Long marbleId) {
         marbleRepository.deleteById(marbleId);

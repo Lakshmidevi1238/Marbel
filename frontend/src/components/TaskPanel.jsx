@@ -1,23 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import * as api from "../api";
 
-// ✅ CORRECT LOCAL DATE FORMAT (MATCHES BACKEND)
-function toYMDLocal(date) {
-  const d = new Date(date);
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
-}
-
 export default function TaskPanel({ date }) {
   const [allTasks, setAllTasks] = useState([]);
   const [newTask, setNewTask] = useState("");
   const [priority, setPriority] = useState("medium");
 
-  const selectedDate = toYMDLocal(date);
+  // ✅ DATE IS ALREADY YYYY-MM-DD — DO NOT TOUCH IT
+  const selectedDate = date;
 
-  // ✅ ALWAYS LOAD FROM BACKEND
+  // ✅ LOAD TASKS
   const loadTasks = async () => {
     try {
       const data = await api.getTasks();
@@ -31,11 +23,9 @@ export default function TaskPanel({ date }) {
     loadTasks();
   }, []);
 
-  // ✅ PERFECT DATE FILTER
+  // ✅ PERFECT FILTER (NO UTC, NO SHIFT)
   const tasksForThisDay = useMemo(() => {
-    return allTasks.filter(
-      (task) => task.dueDate === selectedDate
-    );
+    return allTasks.filter((task) => task.dueDate === selectedDate);
   }, [allTasks, selectedDate]);
 
   // ✅ ADD TASK
@@ -51,17 +41,17 @@ export default function TaskPanel({ date }) {
 
     setNewTask("");
     setPriority("medium");
-    loadTasks(); // ✅ FORCE REFRESH
+    loadTasks();
   };
 
-  // ✅ COMPLETE TASK
+  // ✅ COMPLETE
   const handleComplete = async (id) => {
     await api.completeTask(id);
     loadTasks();
     window.dispatchEvent(new Event("marbles-updated"));
   };
 
-  // ✅ DELETE TASK
+  // ✅ DELETE
   const handleDelete = async (id) => {
     await api.deleteTask(id);
     loadTasks();
@@ -119,7 +109,13 @@ export default function TaskPanel({ date }) {
             key={task.id}
             className="flex items-center justify-between gap-2 mb-2"
           >
-            <span className={`text-sm ${task.completed ? "line-through text-gray-400" : "text-gray-800"}`}>
+            <span
+              className={`text-sm ${
+                task.completed
+                  ? "line-through text-gray-400"
+                  : "text-gray-800"
+              }`}
+            >
               {task.title}
             </span>
 
