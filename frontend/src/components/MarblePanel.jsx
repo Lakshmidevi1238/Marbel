@@ -2,10 +2,19 @@ import { useEffect, useState } from "react";
 import * as api from "../api";
 import PhysicsGlassBowl3D from "./PhysicsGlassBowl3D";
 
+// ✅ SAFE LOCAL YYYY-MM-DD FORMATTER
+function toLocalYMD(date) {
+  const d = new Date(date);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 export default function MarblePanel({ date }) {
   const [allMarbles, setAllMarbles] = useState([]);
 
-  // ✅ Fetch all marbles for the logged-in user
+  // ✅ LOAD MARBLES
   const loadMarbles = async () => {
     try {
       const data = await api.getMarbles();
@@ -19,23 +28,22 @@ export default function MarblePanel({ date }) {
     loadMarbles();
   }, []);
 
-  // ✅ Reload when a task is completed
+  // ✅ RELOAD WHEN TASK COMPLETES
   useEffect(() => {
     const reload = () => loadMarbles();
     window.addEventListener("marbles-updated", reload);
     return () => window.removeEventListener("marbles-updated", reload);
   }, []);
 
-  // ✅ FORMAT SELECTED DATE → YYYY-MM-DD
-  const selectedDate = date
-    ? new Date(date).toISOString().split("T")[0]
-    : null;
+  // ✅ USE LOCAL DATE — NOT UTC
+  const selectedDate = date ? toLocalYMD(date) : null;
 
-  // ✅ FILTER MARBLES BY DATE (NO MORE `c` ERROR)
+  // ✅ FILTER CORRECTLY BY LOCAL DATE
   const marblesForDay = selectedDate
     ? allMarbles.filter((m) => {
         if (!m.awardedAt) return false;
-        return m.awardedAt.startsWith(selectedDate);
+        const marbleDate = toLocalYMD(m.awardedAt);
+        return marbleDate === selectedDate;
       })
     : [];
 

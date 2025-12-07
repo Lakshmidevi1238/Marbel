@@ -93,7 +93,18 @@ public class TaskServiceImpl implements TaskService {
         t.setCompletedAt(Instant.now());
 
         MarbleType type = MarbleMapper.fromPriority(t.getPriority());
-        Marble marble = marbleService.awardMarble(t.getUser().getId(), type, "default");
+
+        // ✅ FIX: USE TASK DUE DATE FOR MARBLE DATE
+        LocalDate marbleDate = t.getDueDate() != null
+                ? t.getDueDate()
+                : LocalDate.now();
+
+        Marble marble = marbleService.awardMarble(
+                t.getUser().getId(),
+                type,
+                "default",
+                marbleDate   // ✅ THIS IS THE FIX
+        );
 
         // ✅ STORE THE LINK
         t.setAwardedMarbleId(marble.getId());
@@ -101,6 +112,7 @@ public class TaskServiceImpl implements TaskService {
         taskRepository.save(t);
         return toDto(t);
     }
+
 
     private TaskDto toDto(Task t) {
         TaskDto dto = new TaskDto();
