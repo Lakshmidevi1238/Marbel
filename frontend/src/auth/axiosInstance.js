@@ -5,50 +5,82 @@ const BASE_URL = "http://localhost:8080";
 
 const axiosInstance = axios.create({
   baseURL: `${BASE_URL}/api`,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  headers: { "Content-Type": "application/json" },
 });
 
-// ✅ Attach access token to every request
 axiosInstance.interceptors.request.use((config) => {
   const token = localStorage.getItem("marbel_access");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+  if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
-// ✅ Auto-refresh token on 401
+// refresh guard + queue
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(({ resolve, reject }) => {
+    if (error) reject(error);
+    else resolve(token);
+  });
+  failedQueue = [];
+};
+
 axiosInstance.interceptors.response.use(
-  (response) => response,
+  (res) => res,
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
-      try {
-        const refreshToken = localStorage.getItem("marbel_refresh");
-
-        const res = await axios.post(`${BASE_URL}/auth/refresh`, {
-          refreshToken,
-        });
-
-        const newAccessToken = res.data.accessToken;
-
-        localStorage.setItem("marbel_access", newAccessToken);
-
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-        return axiosInstance(originalRequest);
-      } catch (err) {
-        console.error("Refresh failed", err);
-        localStorage.clear();
-        window.location.href = "/login";
-      }
+    // not an auth error or already retried
+    if (error.response?.status !== 401 || originalRequest._retry) {
+      return Promise.reject(error);
     }
 
-    return Promise.reject(error);
+    originalRequest._retry = true;
+
+    if (isRefreshing) {
+      // queue and wait for refresh to finish
+      return new Promise((resolve, reject) => {
+        failedQueue.push({ resolve, reject });
+      })
+        .then((token) => {
+          originalRequest.headers.Authorization = "Bearer " + token;
+          return axiosInstance(originalRequest);
+        })
+        .catch((err) => Promise.reject(err));
+    }
+
+    isRefreshing = true;
+
+    try {
+      const refreshToken = localStorage.getItem("marbel_refresh");
+      if (!refreshToken) throw new Error("No refresh token");
+
+      // NOTE: use /api/auth/refresh (axiosInstance.baseURL is /api)
+      const res = await axios.post(`${BASE_URL}/api/auth/refresh`, {
+        refreshToken,
+      });
+
+      const newAccessToken = res.data.accessToken;
+      const newRefreshToken = res.data.refreshToken;
+
+      localStorage.setItem("marbel_access", newAccessToken);
+      if (newRefreshToken) localStorage.setItem("marbel_refresh", newRefreshToken);
+
+      processQueue(null, newAccessToken);
+
+      originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+      return axiosInstance(originalRequest);
+    } catch (refreshErr) {
+      processQueue(refreshErr, null);
+      localStorage.removeItem("marbel_access");
+      localStorage.removeItem("marbel_refresh");
+      // navigate to login - do not rely on react navigate here
+      window.location.href = "/login";
+      return Promise.reject(refreshErr);
+    } finally {
+      isRefreshing = false;
+    }
   }
 );
 

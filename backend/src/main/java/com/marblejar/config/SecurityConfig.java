@@ -18,15 +18,16 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
+    private final RestAuthenticationEntryPoint authenticationEntryPoint;
 
-    public SecurityConfig(JwtFilter jwtFilter) {
+    // constructor injection: Spring provides JwtFilter and RestAuthenticationEntryPoint beans
+    public SecurityConfig(JwtFilter jwtFilter,
+                          RestAuthenticationEntryPoint authenticationEntryPoint) {
         this.jwtFilter = jwtFilter;
+        this.authenticationEntryPoint = authenticationEntryPoint;
     }
 
-    @Bean
-    public RestAuthenticationEntryPoint restAuthenticationEntryPoint() {
-        return new RestAuthenticationEntryPoint();
-    }
+    // remove any other RestAuthenticationEntryPoint @Bean factory method
 
     @Bean
     public RestAccessDeniedHandler restAccessDeniedHandler() {
@@ -53,7 +54,7 @@ public class SecurityConfig {
                     .anyRequest().authenticated()
             )
             .exceptionHandling(ex -> ex
-                    .authenticationEntryPoint(restAuthenticationEntryPoint())
+                    .authenticationEntryPoint(authenticationEntryPoint)
                     .accessDeniedHandler(restAccessDeniedHandler())
             )
             // keep anonymous enabled (do not disable anonymous)
