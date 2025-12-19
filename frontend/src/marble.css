@@ -1,0 +1,51 @@
+/* src/marble.css */
+
+/* base label overlay */
+.marble-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 700;
+  font-size: 11px;
+  color: #111;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.35);
+  pointer-events: none;
+  transition: transform 200ms linear, opacity 150ms ease, filter 250ms ease;
+}
+
+/* rotate text when AI mode active */
+.marble-rotate {
+  animation: marbleSpin 2.4s linear infinite;
+}
+
+/* keyframes */
+@keyframes marbleSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* active scale + glow */
+.marble-active {
+  transform: scale(1.06);
+  filter: drop-shadow(0 6px 12px rgba(217,199,154,0.35));
+}
+
+/* when hovered, label should snap to center (we rely on inline style transform override in JS)
+   the CSS below ensures smooth transition when snapping */
+.marble-label_center {
+  transform: translate3d(0,0,0) !important;
+  transition: transform 175ms cubic-bezier(.2,.9,.2,1);
+}
+
+/* small helper: reduce pointer events while animation is running */
+.marble-label,
+.marble-label * {
+  pointer-events: none;
+}
+/* make sure the label is painted above the WebGL canvas */
+.marble-label {
+  z-index: 50;
+  will-change: transform, opacity;
+}

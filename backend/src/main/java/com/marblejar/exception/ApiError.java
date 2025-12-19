@@ -1,5 +1,7 @@
 package com.marblejar.exception;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import java.time.Instant;
 import java.util.Map;
 
@@ -8,7 +10,10 @@ public class ApiError {
     private int status;
     private String error;
     private String message;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Instant timestamp = Instant.now();
+
     private Map<String, Object> details;
 
     public ApiError() {}
@@ -17,6 +22,7 @@ public class ApiError {
         this.status = status;
         this.error = error;
         this.message = message;
+        this.timestamp = Instant.now();
         this.details = details;
     }
 

@@ -59,7 +59,7 @@ export default function Register() {
         </button>
 
         <p className="mt-4 text-center text-sm">
-          Already have an account? <Link to="/">Login</Link>
+          Already have an account? <Link to="/login">Login</Link>
         </p>
       </div>
     </div>
